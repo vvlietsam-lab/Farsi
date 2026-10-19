@@ -87,6 +87,8 @@ display:flex;flex-direction:column;justify-content:space-between;gap:8px;padding
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
 .kpis div{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--glass)}
 .kpis b{display:block;font-size:24px;font-variant-numeric:tabular-nums}.kpis span{font-size:12px;color:var(--dim)}
+.vt{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:16px}
+.vrows{display:grid;grid-template-columns:auto 1fr 1fr;gap:6px 12px;margin-top:10px;align-items:center;font-size:15px}.vrows .fa{font-size:19px;direction:rtl;text-align:right}.vrows .pp{color:var(--dim);font-size:13px}
 .troph{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
 .troph div{border:1px solid var(--line);border-radius:10px;padding:10px;font-size:13px;display:flex;gap:8px;align-items:center;opacity:.35}
 .troph div.got{opacity:1}.troph i{width:26px;height:26px;border-radius:50%;flex:0 0 26px;display:grid;place-items:center;font-style:normal;color:#1a1200;font-size:13px}
@@ -325,6 +327,8 @@ function render(){lock=false;const q=R.items[R.i];let body="";
  else if(q.kind==="cloze"){body=`<div class="card" id="card"><span class="badge">Kies het ontbrekende woord</span>
   <div class="word sm ${fc()}" style="line-height:1.7">${q.toks.map((t,j)=>j===q.k?`<span class="blank" id="bl">&nbsp;</span>`:esc(t)).join(" ")}</div><div class="tr">${esc(q.z[2])}</div></div>
   <div class="ans">${q.opts.map((o,j)=>`<button class="a" data-j="${j}"><span class="num">${j+1}</span><span class="v ${fc()}">${esc(o)}</span></button>`).join("")}</div>`}
+ else if(q.kind==="gen"){body=`<div class="card" id="card"><span class="badge">${q.badge}</span>${q.prompt}<div class="tr" id="tr"></div></div><div class="ans">${q.opts.map((o,j)=>`<button class="a" data-j="${j}"><span class="num">${j+1}</span><span class="v ${o.c||""}">${o.h}</span></button>`).join("")}</div>`}
+ else if(q.kind==="gtype"){body=`<div class="card" id="card"><span class="badge">${q.badge}</span>${q.prompt}<div class="tr" id="tr"><button class="hintbtn" id="hint">Hint</button></div></div><form class="typerow" id="tf"><input id="ti" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${q.ph}"><button class="btn pri" type="submit">Controleer</button></form><p class="note" style="text-align:center"><button class="hintbtn" id="idk">Weet ik niet</button></p>`}
  else if(q.kind==="abc"){body=`<div class="card" id="card"><span class="badge">${q.rev?"Welke letter is dit?":"Hoe heet deze letter?"}</span>
   <div class="word ${q.rev?"sm":"fa"}">${esc(q.rev?q.L[1]+" · "+q.L[2]:q.L[0])}</div></div>
   <div class="ans">${q.opts.map((o,j)=>`<button class="a" data-j="${j}"><span class="num">${j+1}</span><span class="v ${q.rev?"fa":""}" style="${q.rev?"font-size:30px":""}">${esc(q.rev?o[0]:o[1]+" · "+o[2])}</span></button>`).join("")}</div>`}
@@ -334,7 +338,8 @@ function render(){lock=false;const q=R.items[R.i];let body="";
  if(q.kind==="intro"){say(q.card.w[0]);$("nx").onclick=()=>next();$("nx").focus();return}
  if(q.kind==="listen")setTimeout(()=>say(q.card.w[0]),300);
  scr.querySelectorAll(".ans .a").forEach(b=>b.onclick=()=>answer(+b.dataset.j===q.ci,+b.dataset.j));
- if($("hint"))$("hint").onclick=()=>{if(lock)return;q.h=1;$("tr").textContent=q.kind==="type"?(q.fa?q.card.w[2]:q.card.w[1]).slice(0,2)+"…":other(q.card.w)};
+ if($("hint"))$("hint").onclick=()=>{if(lock)return;q.h=1;$("tr").textContent=q.kind==="gtype"?q.hint:q.kind==="type"?(q.fa?q.card.w[2]:q.card.w[1]).slice(0,2)+"…":other(q.card.w)};
+ if(q.kind==="gtype"){$("ti").focus();$("tf").onsubmit=e=>{e.preventDefault();if(lock)return;const v=$("ti").value,r=check(v,q.ans);answer(r>0,v,false,r===1)};$("idk").onclick=()=>!lock&&answer(false,"")}
  if(q.kind==="type"){$("ti").focus();$("tf").onsubmit=e=>{e.preventDefault();if(lock)return;const v=$("ti").value,r=check(v,q.fa?nlParts(q.card.w[2]):[q.card.w[1]]);answer(r>0,v,false,r===1)};$("idk").onclick=()=>!lock&&answer(false,"")}
  if(q.kind==="pairs"){let sel=null,left=q.cards.length,miss=0;scr.querySelectorAll(".pairs .a").forEach(b=>b.onclick=()=>{if(b.classList.contains("done")||lock)return;
    if(b.dataset.s==="L")say(BYID[b.dataset.id].w[0]);
@@ -349,11 +354,11 @@ function render(){lock=false;const q=R.items[R.i];let body="";
  startTimer()}
 function reveal(q){if(q.card){const w=q.card.w;return`<span class="fa">${esc(w[0])}</span> · ${esc(w[1])} · ${esc(w[2])}`}
  if(q.z)return`<span class="fa">${esc(q.z[0])}</span><br>${esc(q.z[1])}<br>${esc(q.z[2])}`;if(q.L)return`<span class="fa" style="font-size:22px">${q.L[0]}</span> · ${q.L[1]} · ${q.L[2]}`;
- if(q.cards)return q.miss?`${q.miss} keer mis gekoppeld`:"Alles in één keer goed";return""}
+ if(q.rev)return q.rev;if(q.cards)return q.miss?`${q.miss} keer mis gekoppeld`:"Alles in één keer goed";return""}
 function answer(ok,j,timeout,close){if(lock||!$("fbw")||!R||!R.items)return;lock=true;clearInterval(tmr);const q=R.items[R.i];q.r=ok?1:0;
  if(q.opts){const bs=scr.querySelectorAll(".ans .a");bs.forEach((b,k)=>{b.disabled=true;b.classList.add(k===q.ci?"ok":k===j?"bad":"fade")});if(q.kind==="cloze"&&$("bl"))$("bl").textContent=q.opts[q.ci]}
  if(q.kind==="mc"||q.kind==="listen")$("tr").textContent=q.kind==="listen"?q.card.w[0]+" · "+q.card.w[1]:other(q.card.w);
- if(q.kind==="type"){$("ti").classList.add(ok?"ok":"bad");$("ti").disabled=true}
+ if(q.kind==="type"||q.kind==="gtype"){$("ti").classList.add(ok?"ok":"bad");$("ti").disabled=true}
  if(q.kind==="build")$("slot").classList.add(ok?"ok":"bad");
  $("card")&&($("card").className="card "+(ok?"ok":"bad"));flash(ok?"ok":"bad");
  if(q.card&&!q.re)review(q.card.id,ok);if(q.kind==="pairs")q.cards.forEach(c=>{if(!S.mem[c.id]||!q.re)review(c.id,true)});
@@ -380,8 +385,8 @@ function end(failed){exitRun();const done=R.res.filter(r=>r.q.kind!=="intro"),ok
   :`<div class="big ${pct>=80?"good":pct>=50?"mid":"low"}">${R.endTitle||(pct===100?"Perfect!":"Les klaar!")}</div><p class="sub">${esc(R.title)}</p>`}
  <div class="stats"><div style="border-color:var(--gold)">Totaal XP<b>${xp}</b></div><div style="border-color:var(--ok)">Nauwkeurig<b>${pct}%</b></div>${gem?`<div style="border-color:var(--gem)">Diamanten<b>+${gem}</b></div>`:""}<div>Combo<b>x${R.best}</b></div>${R.extra?R.extra():""}</div>
  <div class="row" style="margin-bottom:22px">${R.path?`<button class="btn pri big" id="menu">Ga verder</button>`:`${R.again?`<button class="btn pri" id="again">Opnieuw</button>`:""}<button class="btn" id="menu">Klaar</button>`}${wrong.length?`<button class="btn" id="fix">Oefen ${wrong.length} fouten</button>`:""}</div>
- <div class="list">${done.filter(r=>r.q.card||r.q.z||r.q.L).map(r=>{const q=r.q,a=q.card?q.card.w:q.z?q.z:[q.L[0],q.L[1],q.L[2]];return`<div class="${r.ok?"ok":"bad"}"><span class="m">${r.ok?"✓":"✕"}</span><span class="fa">${esc(a[0])}</span><span>${esc(a[1])}</span><span>${esc(a[2])}</span></div>`}).join("")}</div></div>`;
- scrollTo(0,0);$("menu").onclick=()=>go(R.home||"learn");if($("again"))$("again").onclick=R.again;
+ <div class="list">${done.filter(r=>r.q.card||r.q.z||r.q.L||r.q.row).map(r=>{const q=r.q,a=q.row?q.row:q.card?q.card.w:q.z?q.z:[q.L[0],q.L[1],q.L[2]];return`<div class="${r.ok?"ok":"bad"}"><span class="m">${r.ok?"✓":"✕"}</span><span class="fa">${esc(a[0])}</span><span>${esc(a[1])}</span><span>${esc(a[2])}</span></div>`}).join("")}</div></div>`;
+ scrollTo(0,0);$("menu").onclick=()=>R.after?R.after():go(R.home||"learn");if($("again"))$("again").onclick=R.again;
  if(wrong.length)$("fix").onclick=()=>run({title:"Fouten oefenen",items:sh(wrong).map(c=>qType(c,1)),back:()=>go("practice"),home:"practice",requeue:1,onDone:()=>({gem:2})})}
 
 /* ================= learning path ================= */
@@ -474,7 +479,94 @@ function catPick(title,fn){exitRun();document.body.classList.add("inq");scr.inne
  <div class="grid" style="margin-top:16px">${[ALL,...C].map(c=>{const n=wordsOf(c).filter(x=>DIFF[S.diff].lv.includes(x.w[3])).length,b=S.best[c+S.diff];
   return`<button class="tile" data-c="${esc(c)}"><span class="g">${c===ALL?"★":esc(D[c].g)}</span><span><span class="n">${esc(c)}</span><br><span class="c">${n} vragen${b!=null&&fn===quiz?`<span class="best">${b}%</span>`:""}</span></span></button>`}).join("")}</div>`;
  $("back").onclick=()=>{exitRun();go("practice")};scr.querySelectorAll(".tile").forEach(t=>t.onclick=()=>fn(t.dataset.c))}
-const GAMES=[["🧠","Woordquiz","Kies de juiste betekenis, met timer.",()=>catPick("Woordquiz",quiz)],
+/* ================= verbs ================= */
+const ZW="‌";
+const VBASE=[
+["رفتن","raftan","gaan","رفت","raft","رو","rav"],["آمدن","âmadan","komen","آمد","âmad","آی","ây"],["کردن","kardan","doen","کرد","kard","کن","kon"],
+["گفتن","goftan","zeggen","گفت","goft","گوی","guy"],["دیدن","didan","zien","دید","did","بین","bin"],["خوردن","khordan","eten","خورد","khord","خور","khor"],
+["نوشیدن","nushidan","drinken","نوشید","nushid","نوش","nush"],["خواندن","khândan","lezen / zingen","خواند","khând","خوان","khân"],["نوشتن","neveshtan","schrijven","نوشت","nevesht","نویس","nevis"],
+["دانستن","dânestan","weten","دانست","dânest","دان","dân"],["خواستن","khâstan","willen","خواست","khâst","خواه","khâh"],["توانستن","tavânestan","kunnen","توانست","tavânest","توان","tavân"],
+["داشتن","dâshtan","hebben","داشت","dâsht","دار","dâr",{nomi:1}],["بودن","budan","zijn","بود","bud","باش","bâsh",{be:1}],["شدن","shodan","worden","شد","shod","شو","shav"],
+["دادن","dâdan","geven","داد","dâd","ده","dah"],["گرفتن","gereftan","pakken / krijgen","گرفت","gereft","گیر","gir"],["آوردن","âvardan","brengen","آورد","âvard","آور","âvar"],
+["بردن","bordan","meenemen","برد","bord","بر","bar"],["زدن","zadan","slaan","زد","zad","زن","zan"],["نشستن","neshastan","gaan zitten","نشست","neshast","نشین","neshin"],
+["خوابیدن","khâbidan","slapen","خوابید","khâbid","خواب","khâb"],["پرسیدن","porsidan","vragen","پرسید","porsid","پرس","pors"],["شنیدن","shenidan","horen","شنید","shenid","شنو","shenav"],
+["فهمیدن","fahmidan","begrijpen","فهمید","fahmid","فهم","fahm"],["پوشیدن","pushidan","aantrekken (kleding)","پوشید","pushid","پوش","push"],["خریدن","kharidan","kopen","خرید","kharid","خر","khar"],
+["فروختن","forukhtan","verkopen","فروخت","forukht","فروش","forush"],["ساختن","sâkhtan","bouwen / maken","ساخت","sâkht","ساز","sâz"],["شناختن","shenâkhtan","kennen (iemand)","شناخت","shenâkht","شناس","shenâs"],
+["گذاشتن","gozâshtan","neerleggen","گذاشت","gozâsht","گذار","gozâr"],["ماندن","mândan","blijven","ماند","mând","مان","mân"],["رسیدن","residan","aankomen","رسید","resid","رس","res"],
+["دویدن","davidan","rennen","دوید","david","دو","dav"],["پختن","pokhtan","koken","پخت","pokht","پز","paz"],["شستن","shostan","wassen","شست","shost","شوی","shuy"],
+["بستن","bastan","dichtdoen","بست","bast","بند","band"],["کشیدن","keshidan","trekken","کشید","keshid","کش","kesh"],["فرستادن","ferestâdan","sturen","فرستاد","ferestâd","فرست","ferest"],
+["آموختن","âmukhtan","leren","آموخت","âmukht","آموز","âmuz"],["پریدن","paridan","springen","پرید","parid","پر","par"],["خندیدن","khandidan","lachen","خندید","khandid","خند","khand"],
+["رقصیدن","raghsidan","dansen","رقصید","raghsid","رقص","raghs"],["یافتن","yâftan","vinden","یافت","yâft","یاب","yâb"],["گشتن","gashtan","rondlopen / zoeken","گشت","gasht","گرد","gard"]];
+const VCOMP=[["کار","kâr","werken","کردن"],["صحبت","sohbat","praten","کردن"],["زندگی","zendegi","wonen / leven","کردن"],["گریه","gerye","huilen","کردن"],["بازی","bâzi","spelen","کردن"],
+["فکر","fekr","denken","کردن"],["کمک","komak","helpen","کردن"],["پیدا","peydâ","vinden (terugvinden)","کردن"],["سفر","safar","reizen","کردن"],["باز","bâz","openen","کردن"],
+["استراحت","esterâhat","rusten","کردن"],["شروع","shoru","beginnen","کردن"],["تمام","tamâm","afmaken","کردن"],["رانندگی","rânandegi","autorijden","کردن"],["درس","dars","studeren","خواندن"],
+["دوست","dust","houden van","داشتن"],["یاد","yâd","leren (aanleren)","گرفتن"],["گوش","gush","luisteren","دادن"],["زنگ","zang","bellen","زدن"],["بلند","boland","opstaan","شدن"]];
+const VERBS=[...VBASE.map(b=>({fa:b[0],la:b[1],nl:b[2],b})),...VCOMP.map(c=>{const b=VBASE.find(x=>x[0]===c[3]);return{fa:c[0]+" "+b[0],la:c[1]+" "+b[1],nl:c[2],b,pre:[c[0],c[1]]}})];
+const PRON=[["من","man","ik"],["تو","to","jij"],["او","u","hij/zij"],["ما","mâ","wij"],["شما","shomâ","jullie"],["آن‌ها","ânhâ","zij (mv)"]];
+const TENSES=[{n:"Tegenwoordige tijd",ex:"ik doe",lv:0},{n:"Verleden tijd",ex:"ik deed",lv:0},{n:"Ontkennend heden",ex:"ik doe niet",lv:1},{n:"Ontkennend verleden",ex:"ik deed niet",lv:1},
+ {n:"Toekomende tijd",ex:"ik zal doen",lv:1},{n:"Verleden duurvorm",ex:"ik was aan het doen",lv:2},{n:"Voltooid",ex:"ik heb gedaan",lv:2}];
+const EF=["م","ی","د","یم","ید","ند"],EL=["am","i","ad","im","id","and"],PF=["م","ی","","یم","ید","ند"],PL=["am","i","","im","id","and"];
+const KH=["خواهم","خواهی","خواهد","خواهیم","خواهید","خواهند"],KL=["khâham","khâhi","khâhad","khâhim","khâhid","khâhand"];
+const PRF=[ZW+"ام",ZW+"ای"," است",ZW+"ایم",ZW+"اید",ZW+"اند"],PRL=["-am","-i"," ast","-im","-id","-and"];
+const BEF=["هستم","هستی","است","هستیم","هستید","هستند"],BEL=["hastam","hasti","ast","hastim","hastid","hastand"];
+const NBF=["نیستم","نیستی","نیست","نیستیم","نیستید","نیستند"],NBL=["nistam","nisti","nist","nistim","nistid","nistand"];
+function vcore(b,t,p){const[,,,pf,pl,sf,sl,fl]=b,f=fl||{};
+ switch(t){case 0:if(f.be)return[BEF[p],BEL[p]];return f.nomi?[sf+EF[p],sl+EL[p]]:["می"+ZW+sf+EF[p],"mi-"+sl+EL[p]];
+ case 1:return[pf+PF[p],pl+PL[p]];
+ case 2:if(f.be)return[NBF[p],NBL[p]];return f.nomi?["ن"+sf+EF[p],"na"+sl+EL[p]]:["نمی"+ZW+sf+EF[p],"nemi-"+sl+EL[p]];
+ case 3:return pf[0]==="آ"?["نیا"+pf.slice(1)+PF[p],"ni"+pl+PL[p]]:["ن"+pf+PF[p],"na"+pl+PL[p]];
+ case 4:return[KH[p]+" "+pf,KL[p]+" "+pl];
+ case 5:if(f.be)return null;return["می"+ZW+pf+PF[p],"mi-"+pl+PL[p]];
+ case 6:return[pf+"ه"+PRF[p],pl+"e"+PRL[p]]}}
+function conj(v,t,p){const r=vcore(v.b,t,p);return r&&v.pre?[v.pre[0]+" "+r[0],v.pre[1]+" "+r[1]]:r}
+const vTenses=()=>TENSES.map((x,i)=>i).filter(i=>TENSES[i].lv<=S.diff);
+const vf=r=>S.latin?r[1]:r[0];
+const vInf=v=>`<div class="word sm ${fc()}">${esc(S.latin?v.la:v.fa)}</div><div class="tr">${esc(S.latin?v.fa:v.la)} · ${esc(v.nl)}</div>`;
+function vPick(){for(;;){const v=VERBS[Math.random()*VERBS.length|0],ts=vTenses(),t=ts[Math.random()*ts.length|0],p=Math.random()*6|0,r=conj(v,t,p);if(r)return{v,t,p,r}}}
+function vRow(v,t,p,r){return[r[0],r[1],PRON[p][2]+" · "+TENSES[t].n.toLowerCase()+" · "+v.nl]}
+function vPrompt(v,t,p){return vInf(v)+`<p style="margin:14px 0 0;font-size:19px"><b>${PRON[p][2]}</b> <span class="sub">(${esc(S.latin?PRON[p][1]:PRON[p][0])})</span> · <b>${TENSES[t].n}</b><br><span class="note">zoals "${TENSES[t].ex}"</span></p>`}
+function qConj(){const{v,t,p,r}=vPick(),seen=new Set([r[0]]),ds=[];
+ for(const[tt,pp] of sh(vTenses().flatMap(a=>[0,1,2,3,4,5].map(b=>[a,b])))){const x=conj(v,tt,pp);if(x&&!seen.has(x[0])){seen.add(x[0]);ds.push(x)}if(ds.length>=3)break}
+ const opts=sh([r,...ds]);return{kind:"gen",badge:"Vervoeg het werkwoord",prompt:vPrompt(v,t,p),opts:opts.map(o=>({h:esc(vf(o)),c:fc()})),ci:opts.indexOf(r),rev:`<span class="fa">${esc(r[0])}</span> · ${esc(r[1])}`,row:vRow(v,t,p,r)}}
+function qConjT(){const{v,t,p,r}=vPick();return{kind:"gtype",badge:"Typ de vervoeging",prompt:vPrompt(v,t,p),ans:[r[1],r[0]],ph:"bijv. mi-ravam",hint:r[1].slice(0,3)+"…",rev:`<span class="fa">${esc(r[0])}</span> · ${esc(r[1])}`,row:vRow(v,t,p,r)}}
+function qWho(){const{v,t,p,r}=vPick(),lab=(a,b)=>PRON[b][2]+" · "+TENSES[a].n,ok=lab(t,p),seen=new Set([ok]),ds=[];
+ for(const[tt,pp] of sh(vTenses().flatMap(a=>[0,1,2,3,4,5].map(b=>[a,b])))){const x=conj(v,tt,pp),l=lab(tt,pp);if(x&&x[0]!==r[0]&&!seen.has(l)){seen.add(l);ds.push(l)}if(ds.length>=3)break}
+ const opts=sh([ok,...ds]);return{kind:"gen",badge:"Wie en wanneer?",prompt:`<div class="word sm ${fc()}">${esc(vf(r))}</div><div class="tr">${esc(v.nl)} (${esc(S.latin?v.la:v.fa)})</div>`,opts:opts.map(o=>({h:esc(o)})),ci:opts.indexOf(ok),rev:`${esc(r[1])} = ${esc(ok.toLowerCase())}`,row:vRow(v,t,p,r)}}
+function qStem(){const b=VBASE[Math.random()*VBASE.length|0],st=x=>S.latin?x[6]:x[5],ds=pickN(VBASE,3,x=>x!==b&&x[6]!==b[6]),opts=sh([b,...ds]);
+ return{kind:"gen",badge:"Wat is de heden-stam?",prompt:`<div class="word sm ${fc()}">${esc(S.latin?b[1]:b[0])}</div><div class="tr">${esc(b[2])} · verleden-stam: ${esc(S.latin?b[4]:b[3])}</div>`,
+  opts:opts.map(o=>({h:esc(st(o)),c:fc()})),ci:opts.indexOf(b),rev:`<span class="fa">${esc(b[5])}</span> · ${esc(b[6])} → mi-${esc(b[6])}am`,row:[b[0],b[1]+" → "+b[6],b[2]]}}
+function qVMean(){const v=VERBS[Math.random()*VERBS.length|0],rev=dirP()===1,opts=sh([v,...pickN(VERBS,3,x=>x!==v&&x.nl!==v.nl)]);
+ return{kind:"gen",badge:rev?"Welk werkwoord is dit?":"Wat betekent dit werkwoord?",prompt:rev?`<div class="word sm">${esc(v.nl)}</div>`:vInf(v).replace(/ · [^<]*<\/div>$/,"</div>"),
+  opts:opts.map(o=>rev?{h:esc(S.latin?o.la:o.fa),c:fc()}:{h:esc(o.nl)}),ci:opts.indexOf(v),rev:`<span class="fa">${esc(v.fa)}</span> · ${esc(v.la)} · ${esc(v.nl)}`,row:[v.fa,v.la,v.nl]}}
+const VGAMES=[["🎯","Vervoegen","Kies de juiste vorm bij persoon en tijd.",qConj],["⌨️","Vervoegen typen","Typ de vorm zelf. De beste oefening.",qConjT],
+ ["🕵️","Wie en wanneer?","Je ziet een vorm. Wie doet het en in welke tijd?",qWho],["🌱","Stammen","Ken je de heden-stam? Daar draait alles om.",qStem],["📘","Betekenis","Welk werkwoord is dit?",qVMean]];
+function vRun(g){const G=VGAMES[g];run({title:"Werkwoorden · "+G[1],items:Array.from({length:S.n},G[3]),requeue:1,mult:S.diff+1,back:verbArea,after:verbArea,again:()=>vRun(g),onDone:(ok,n,p)=>({gem:p===100?4:2})})}
+function verbArea(){exitRun();document.body.classList.add("inq");scrollTo(0,0);const ts=vTenses();
+ scr.innerHTML=`<div class="qbar"><button class="btn x" id="back" aria-label="Terug">✕</button></div><h1>Werkwoorden</h1><p class="sub">${VERBS.length} werkwoorden · ${TENSES.length} tijden · 6 personen</p>
+ <div class="grid" style="margin-top:16px">${VGAMES.map((g,j)=>`<button class="tile" data-g="${j}"><span class="ic">${g[0]}</span><span><span class="n">${g[1]}</span><br><span class="c">${g[2]}</span></span></button>`).join("")}</div>
+ <h2>Instellingen</h2><div class="opts"><div><label>Niveau</label>${seg("vd",DIFF.map(d=>d.n),S.diff)}<div class="note">Tijden: ${ts.map(i=>TENSES[i].n.toLowerCase()).join(", ")}</div></div>
+  <div><label>Vragen</label>${seg("vn",["10","20","30"],[10,20,30].indexOf(S.n))}</div></div>
+ <h2>Zo werkt het</h2><div class="why">
+  <div><b>Twee stammen</b>Elk werkwoord heeft een verleden-stam (raft) en een heden-stam (rav). Ken je die twee, dan kun je alles vervoegen.</div>
+  <div><b>Uitgangen</b>-am (ik), -i (jij), -ad (hij/zij), -im (wij), -id (jullie), -and (zij). In de verleden tijd heeft hij/zij geen uitgang: raft.</div>
+  <div><b>Heden en niet</b>mi- + heden-stam: mi-ravam (ik ga). Ontkennen met ne-/na-: nemi-ravam, naraftam.</div>
+  <div><b>Toekomst en voltooid</b>khâham + verleden-stam: khâham raft (ik zal gaan). Voltooid: rafte-am (ik ben gegaan).</div>
+  <div><b>Uitzonderingen</b>dâshtan (hebben) krijgt geen mi-: dâram. budan (zijn) wordt hastam / nistam. Samengestelde werkwoorden vervoeg je alleen in het laatste deel: kâr mi-konam.</div></div>
+ <h2>Alle werkwoorden</h2><div class="grid">${VERBS.map((v,j)=>`<button class="tile" data-v="${j}" style="min-height:0"><span class="g" style="font-size:22px">${esc(v.fa)}</span><span><span class="n">${esc(v.la)}</span><br><span class="c">${esc(v.nl)}</span></span></button>`).join("")}</div>`;
+ $("back").onclick=()=>{exitRun();go("practice")};
+ scr.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>vRun(+b.dataset.g));scr.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>verbTable(VERBS[+b.dataset.v]));
+ $("vd").querySelectorAll("button").forEach(b=>b.onclick=()=>{S.diff=+b.dataset.v;save();verbArea()});$("vn").querySelectorAll("button").forEach(b=>b.onclick=()=>{S.n=[10,20,30][+b.dataset.v];save();verbArea()})}
+function verbTable(v){scrollTo(0,0);const b=v.b;
+ scr.innerHTML=`<div class="qbar"><button class="btn x" id="back" aria-label="Terug">✕</button></div><h1 class="fa">${esc(v.fa)}</h1><p class="sub">${esc(v.la)} · ${esc(v.nl)} · verleden-stam <b>${esc(b[4])}</b> (${esc(b[3])}) · heden-stam <b>${esc(b[6])}</b> (${esc(b[5])})</p>
+ <div class="vt">${TENSES.map((T,t)=>`<div class="panel"><b>${T.n}</b> <span class="note">"${T.ex}"</span><div class="vrows">${PRON.map((P,p)=>{const r=conj(v,t,p);return`<span class="pp">${P[2]}</span><span class="fa">${r?esc(r[0]):"–"}</span><span>${r?esc(r[1]):"–"}</span>`}).join("")}</div></div>`).join("")}</div>
+ <div class="row" style="margin-top:18px"><button class="btn pri" id="drill">Oefen dit werkwoord</button></div>`;
+ $("back").onclick=verbArea;
+ $("drill").onclick=()=>run({title:"Werkwoord · "+v.la,items:Array.from({length:10},()=>{const ts=vTenses();let t,p,r;do{t=ts[Math.random()*ts.length|0];p=Math.random()*6|0;r=conj(v,t,p)}while(!r);
+  const q=Math.random()<.5?qConjT():qConj();const seen=new Set([r[0]]),ds=[];for(const[tt,pp] of sh(ts.flatMap(a=>[0,1,2,3,4,5].map(c=>[a,c])))){const x=conj(v,tt,pp);if(x&&!seen.has(x[0])){seen.add(x[0]);ds.push(x)}if(ds.length>=3)break}
+  Object.assign(q,{prompt:vPrompt(v,t,p),rev:`<span class="fa">${esc(r[0])}</span> · ${esc(r[1])}`,row:vRow(v,t,p,r)});if(q.kind==="gtype")Object.assign(q,{ans:[r[1],r[0]],hint:r[1].slice(0,3)+"…"});else{const o=sh([r,...ds]);Object.assign(q,{opts:o.map(x=>({h:esc(vf(x)),c:fc()})),ci:o.indexOf(r)})}return q}),
+  requeue:1,mult:S.diff+1,back:()=>verbTable(v),after:()=>{exitRun();document.body.classList.add("inq");verbTable(v)},again:null,onDone:()=>({gem:2})})}
+
+const GAMES=[["🔤","Werkwoorden","Vervoegen in 7 tijden, stammen en tabellen.",verbArea],["🧠","Woordquiz","Kies de juiste betekenis, met timer.",()=>catPick("Woordquiz",quiz)],
  ["⌨️","Typen","Zelf het antwoord typen. Zo onthoud je het het best.",()=>catPick("Typen",typing)],
  ["🧩","Zinnen bouwen","Woorden in de goede volgorde, beide kanten op.",build,"z"],
  ["✏️","Gatentekst","Kies het woord dat in de zin ontbreekt.",cloze,"z"],
