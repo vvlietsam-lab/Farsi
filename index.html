@@ -54,7 +54,10 @@ h2{font-size:13px;text-transform:uppercase;letter-spacing:.12em;color:var(--dim)
 .node{width:70px;height:66px;border-radius:50%;border:0;cursor:pointer;font-size:26px;font-weight:700;display:grid;place-items:center;color:#061229;
 box-shadow:0 7px 0 rgba(0,0,0,.35);transition:transform .1s;font-family:inherit}
 .node:active{transform:translateY(4px);box-shadow:0 3px 0 rgba(0,0,0,.35)}
-.node.lock{background:#2b3a5c!important;color:#6d7fa3;box-shadow:0 7px 0 #172340;cursor:default}
+.node.lock{background:#2b3a5c!important;color:#6d7fa3;box-shadow:0 7px 0 #172340}
+.sheet{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center;padding:16px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.sheet .panel{max-width:460px;width:100%;background:var(--bg2);display:grid;gap:12px}
+.sheet b{font-size:18px}
 .node.cur{outline:4px solid rgba(255,255,255,.25);outline-offset:6px;animation:pulse 1.8s infinite}
 @keyframes pulse{50%{outline-color:rgba(255,255,255,.6)}}
 .bubble{position:absolute;bottom:calc(100% + 14px);background:var(--fg);color:var(--bg);font-weight:700;font-size:13px;padding:6px 12px;border-radius:8px;white-space:nowrap;letter-spacing:.06em}
@@ -401,13 +404,17 @@ function unitReview(u){run({title:`Unit ${u+1} · Herhaling`,items:sh(UNITS[u].w
 function legendary(u){const ws=UNITS[u].ws;
  run({title:`Unit ${u+1} · Legendarisch`,endTitle:"Legendarisch!",items:pickN(ws,16).map(c=>Math.random()<.6?qType(c,Math.random()<.5?0:1):qMC(c,1,6,ws)),maxMiss:2,time:15,mult:2,path:1,back:()=>go("learn"),
   onDone:()=>{P(u).leg=1;trophy("legend");return{gem:30,xp:40}}})}
+function skipTo(u,li){const m=document.createElement("div");m.className="sheet";
+ m.innerHTML=`<div class="panel" role="dialog" aria-modal="true"><b>Ontgrendelen tot Unit ${u+1}, les ${li+1}?</b><p class="sub">Handig als je op een ander apparaat al verder bent. Alle lessen hiervoor worden als voltooid gemarkeerd, en deze les wordt je volgende les.</p><div class="row" style="justify-content:flex-end"><button class="btn" id="sk0">Annuleren</button><button class="btn pri" id="sk1">Ontgrendelen</button></div></div>`;
+ document.body.appendChild(m);const close=()=>m.remove();m.onclick=e=>{if(e.target===m)close()};$("sk0").onclick=close;$("sk1").focus();
+ $("sk1").onclick=()=>{for(let i=0;i<u;i++)P(i).d=Math.max(P(i).d,UNITS[i].lessons.length);P(u).d=Math.max(P(u).d,li);save();close();learnTab();toast("Ontgrendeld tot Unit "+(u+1)+", les "+(li+1),"Voortgang bijgewerkt")}}
 function learnTab(){const cur=UNITS.findIndex((U,u)=>P(u).d<U.lessons.length);let html="",sec=-1;
  UNITS.forEach((U,u)=>{const p=P(u),col=UCOL[u%UCOL.length],open=u===0||P(u-1).d>=UNITS[u-1].lessons.length,full=p.d>=U.lessons.length;
   const s=Math.floor(u/6);if(s!==sec){sec=s;html+=`<div class="section">Sectie ${s+1} · ${["Beginner","Op weg","Gevorderd beginner","Gemiddeld","Gevorderd","Expert"][s]||"Expert"}</div>`}
   html+=`<div class="unit" id="u${u}" style="background:${open?col:"#2b3a5c"};color:${open?"#061229":"var(--dim)"}"><div><div class="t">Unit ${u+1}: ${esc(U.c)}</div><small>${p.d}/${U.lessons.length} lessen${p.leg?" · 👑 Legendarisch":""}</small></div><span class="sp"></span>
    ${full?`<button class="btn" data-rev="${u}">Herhalen</button>${p.leg?"":`<button class="btn" data-leg="${u}">👑 Legendarisch</button>`}`:""}</div><div class="nodes">`;
   U.lessons.forEach((_,li)=>{const done=li<p.d,isCur=open&&li===p.d,off=Math.sin(li*1.15)*70;
-   html+=`<div class="nwrap" style="transform:translateX(${off}px)">${isCur?`<span class="bubble">${p.d===0&&u===cur?"START":"VOLGENDE"}</span>`:""}<button class="node ${done?"":isCur?"cur":"lock"}" ${done||isCur?`data-l="${u}-${li}"`:"disabled"} style="background:${done?(p.leg?"var(--leg)":col):isCur?col:""}" aria-label="Les ${li+1}">${done?(p.leg?"👑":"✓"):isCur?"★":"🔒"}</button></div>`});
+   html+=`<div class="nwrap" style="transform:translateX(${off}px)">${isCur?`<span class="bubble">${p.d===0&&u===cur?"START":"VOLGENDE"}</span>`:""}<button class="node ${done?"":isCur?"cur":"lock"}" ${done||isCur?`data-l="${u}-${li}"`:`data-skip="${u}-${li}"`} style="background:${done?(p.leg?"var(--leg)":col):isCur?col:""}" aria-label="Les ${li+1}">${done?(p.leg?"👑":"✓"):isCur?"★":"🔒"}</button></div>`});
   html+=`<div class="nwrap"><button class="node ${full?"":"lock"}" ${full?`data-rev="${u}"`:"disabled"} style="background:${full?"var(--gold)":""}" aria-label="Unit-herhaling">${full?"🏆":"🎁"}</button></div></div>`});
  const due=dueList().length;
  scr.innerHTML=`<div class="panel hero" style="margin-top:8px"><div style="flex:1;min-width:200px"><div class="t">${due?due+" woorden worden zwakker":"Je geheugen is op peil"}</div><p class="sub">${due?"Herhaal ze voordat je ze vergeet. Dat kost een paar minuten.":"Ga verder op je pad, of oefen in de oefenhub."}</p></div>
@@ -415,6 +422,7 @@ function learnTab(){const cur=UNITS.findIndex((U,u)=>P(u).d<U.lessons.length);le
  if($("pr"))$("pr").onclick=practiceSession;
  scr.querySelectorAll("[data-l]").forEach(b=>b.onclick=()=>{const[u,li]=b.dataset.l.split("-").map(Number);startLesson(u,li)});
  scr.querySelectorAll("[data-rev]").forEach(b=>b.onclick=()=>unitReview(+b.dataset.rev));
+ scr.querySelectorAll("[data-skip]").forEach(b=>b.onclick=()=>{const[u,li]=b.dataset.skip.split("-").map(Number);skipTo(u,li)});
  scr.querySelectorAll("[data-leg]").forEach(b=>b.onclick=()=>legendary(+b.dataset.leg));
  if(cur>0)setTimeout(()=>{const e=$("u"+cur);e&&e.scrollIntoView({block:"start"})},30)}
 
