@@ -262,7 +262,9 @@ function say(t,slow){if(!canSpeak())return;try{speechSynthesis.cancel();const u=
 /* ================= answer matching ================= */
 const nz=s=>s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/\([^)]*\)/g,"").replace(/q/g,"gh").replace(/x/g,"kh").replace(/w/g,"v").replace(/ou/g,"u").replace(/ee/g,"i").replace(/oo/g,"u").replace(/[^a-z0-9؀-ۿ]/g,"").replace(/(.)\1+/g,"$1");
 function lev(a,b){const d=[...Array(b.length+1).keys()];for(let i=1;i<=a.length;i++){let p=d[0];d[0]=i;for(let j=1;j<=b.length;j++){const t=d[j];d[j]=Math.min(d[j]+1,d[j-1]+1,p+(a[i-1]===b[j-1]?0:1));p=t}}return d[b.length]}
-function check(input,answers){const x=nz(input);if(!x)return 0;let best=0;for(const a of answers){const y=nz(a);if(!y)continue;if(x===y)return 2;const tol=y.length>=9?2:y.length>=4?1:0;if(lev(x,y)<=tol)best=1}return best}
+function check(input,answers){const x=nz(input);if(!x)return 0;let best=0;for(const a of answers){
+  if(/\.\.\.|…/.test(a)){const ps=a.split(/\.\.\.|…/).map(nz),h=ps[0],t=ps[ps.length-1];if(x.length>h.length+t.length){
+   if(x.startsWith(h)&&x.endsWith(t))return 2;const tl=v=>v.length>=4?1:0;if(lev(x.slice(0,h.length),h)<=tl(h)&&lev(x.slice(x.length-t.length),t)<=tl(t))best=1}continue}const y=nz(a);if(!y)continue;if(x===y)return 2;const tol=y.length>=9?2:y.length>=4?1:0;if(lev(x,y)<=tol)best=1}return best}
 const nlParts=s=>[s,...s.split(/[\/;,]| of /).map(t=>t.trim()).filter(Boolean),s.replace(/\([^)]*\)/g,"").trim(),s.replace(/^(de|het|een|te) /,"")];
 const plain=s=>s.toLowerCase().replace(/[.,!?؟،]/g,"").trim();
 
