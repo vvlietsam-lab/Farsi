@@ -566,7 +566,117 @@ function verbTable(v){scrollTo(0,0);const b=v.b;
   Object.assign(q,{prompt:vPrompt(v,t,p),rev:`<span class="fa">${esc(r[0])}</span> · ${esc(r[1])}`,row:vRow(v,t,p,r)});if(q.kind==="gtype")Object.assign(q,{ans:[r[1],r[0]],hint:r[1].slice(0,3)+"…"});else{const o=sh([r,...ds]);Object.assign(q,{opts:o.map(x=>({h:esc(vf(x)),c:fc()})),ci:o.indexOf(r)})}return q}),
   requeue:1,mult:S.diff+1,back:()=>verbTable(v),after:()=>{exitRun();document.body.classList.add("inq");verbTable(v)},again:null,onDone:()=>({gem:2})})}
 
-const GAMES=[["🔤","Werkwoorden","Vervoegen in 7 tijden, stammen en tabellen.",verbArea],["🧠","Woordquiz","Kies de juiste betekenis, met timer.",()=>catPick("Woordquiz",quiz)],
+/* ================= grammar ================= */
+const NN=[["کتاب","ketâb","c","boek","het","boeken",0,1],["خانه","khâne","e","huis","het","huizen",0,1],["ماشین","mâshin","c","auto","de","auto's",0,1],
+["دوست","dust","c","vriend","de","vrienden",["دوستان","dustân"],0],["مرد","mard","c","man","de","mannen",["مردان","mardân"],0],["زن","zan","c","vrouw","de","vrouwen",["زنان","zanân"],0],
+["بچه","bachche","e","kind","het","kinderen",0,0],["درخت","derakht","c","boom","de","bomen",["درختان","derakhtân"],0],["شهر","shahr","c","stad","de","steden",0,0],
+["خیابان","khiyâbân","c","straat","de","straten",0,0],["دختر","dokhtar","c","meisje","het","meisjes",["دختران","dokhtarân"],0],["پسر","pesar","c","jongen","de","jongens",["پسران","pesarân"],0],
+["گل","gol","c","bloem","de","bloemen",0,1],["سگ","sag","c","hond","de","honden",0,0],["گربه","gorbe","e","kat","de","katten",0,0],["میز","miz","c","tafel","de","tafels",0,1],
+["صندلی","sandali","i","stoel","de","stoelen",0,1],["در","dar","c","deur","de","deuren",0,0],["پنجره","panjere","e","raam","het","ramen",0,0],["اتاق","otâgh","c","kamer","de","kamers",0,0],
+["کفش","kafsh","c","schoen","de","schoenen",0,1],["پیراهن","pirâhan","c","overhemd","het","overhemden",0,1],["آهنگ","âhang","c","liedje","het","liedjes",0,0],
+["دانشجو","dâneshju","v","student","de","studenten",["دانشجویان","dâneshjuyân"],0],["معلم","moallem","c","leraar","de","leraren",["معلمان","moallemân"],0],["قلم","ghalam","c","pen","de","pennen",0,1],
+["دفتر","daftar","c","schrift","het","schriften",0,1],["ستاره","setâre","e","ster","de","sterren",["ستارگان","setâregân"],0],["دانشگاه","dâneshgâh","c","universiteit","de","universiteiten",0,0],
+["کلاس","kelâs","c","klas","de","klassen",0,0],["پا","pâ","v","voet","de","voeten",0,0],["کیف","kif","c","tas","de","tassen",0,1],["ساعت","sâat","c","horloge","het","horloges",0,1],
+["توپ","tup","c","bal","de","ballen",0,1],["گوشی","gushi","i","telefoon","de","telefoons",0,1],["برادر","barâdar","c","broer","de","broers",["برادران","barâdarân"],0],
+["خواهر","khâhar","c","zus","de","zussen",["خواهران","khâharân"],0],["کشور","keshvar","c","land","het","landen",0,0],["کوه","kuh","c","berg","de","bergen",0,0],["پرنده","parande","e","vogel","de","vogels",["پرندگان","parandegân"],0]];
+const AJ=[["بزرگ","bozorg","groot","grote","groter","grootste"],["کوچک","kuchak","klein","kleine","kleiner","kleinste"],["خوب","khub","goed","goede","beter","beste",["بهتر","behtar"],["بهترین","behtarin"]],
+["بد","bad","slecht","slechte","slechter","slechtste"],["زیبا","zibâ","mooi","mooie","mooier","mooiste"],["گران","gerân","duur","dure","duurder","duurste"],["ارزان","arzân","goedkoop","goedkope","goedkoper","goedkoopste"],
+["سریع","sari","snel","snelle","sneller","snelste"],["بلند","boland","lang","lange","langer","langste"],["کوتاه","kutâh","kort","korte","korter","kortste"],["جدید","jadid","nieuw","nieuwe","nieuwer","nieuwste"],
+["قدیمی","ghadimi","oud","oude","ouder","oudste"],["گرم","garm","warm","warme","warmer","warmste"],["سرد","sard","koud","koude","kouder","koudste"],["سخت","sakht","moeilijk","moeilijke","moeilijker","moeilijkste"],
+["آسان","âsân","makkelijk","makkelijke","makkelijker","makkelijkste"],["تمیز","tamiz","schoon","schone","schoner","schoonste"]];
+const NUMS=[["دو","do","twee"],["سه","se","drie"],["چهار","chahâr","vier"],["پنج","panj","vijf"],["شش","shesh","zes"],["هفت","haft","zeven"],["هشت","hasht","acht"],["نه","noh","negen"],["ده","dah","tien"]];
+const ORD=[["اول","avval","eerste"],["دوم","dovvom","tweede"],["سوم","sevvom","derde"],["چهارم","chahârom","vierde"],["پنجم","panjom","vijfde"],["ششم","sheshom","zesde"],["هفتم","haftom","zevende"],["هشتم","hashtom","achtste"],["نهم","nohom","negende"],["دهم","dahom","tiende"]];
+const IMP={"رفتن":["be","برو","boro"],"آمدن":["bi","بیا","biâ"],"کردن":["be","بکن","bekon"],"گفتن":["be","بگو","begu"],"دیدن":["be","ببین","bebin"],"خوردن":["bo","بخور","bokhor"],
+"نوشیدن":["be","بنوش","benush"],"خواندن":["be","بخوان","bekhân"],"نوشتن":["be","بنویس","benevis"],"دادن":["be","بده","bedeh"],"گرفتن":["be","بگیر","begir"],"آوردن":["bi","بیاور","biâvar"],
+"بردن":["be","ببر","bebar"],"زدن":["be","بزن","bezan"],"نشستن":["be","بنشین","beneshin"],"خوابیدن":["be","بخواب","bekhâb"],"پرسیدن":["be","بپرس","bepors"],"خریدن":["be","بخر","bekhar"],
+"پوشیدن":["be","بپوش","bepush"],"ماندن":["be","بمان","bemân"],"شدن":["be","بشو","besho"],"دویدن":["be","بدو","bedo"],"بستن":["be","ببند","beband"],"فرستادن":["be","بفرست","beferest"],
+"خندیدن":["be","بخند","bekhand"],"رقصیدن":["be","برقص","beraghs"],"شنیدن":["be","بشنو","beshno"],"ساختن":["be","بساز","besâz"],"گذاشتن":["be","بگذار","begozâr"]};
+const NLP=["ik","jij","hij","wij","jullie","zij"];
+const rn=a=>a[Math.random()*a.length|0],cap=s=>s[0].toUpperCase()+s.slice(1);
+const nPl=n=>[n[0]+ZW+"ها",n[1]+"hâ"];
+const nInd=n=>({c:[n[0]+"ی",n[1]+"i"],e:[n[0]+ZW+"ای",n[1]+"-i"],i:[n[0]+ZW+"ای",n[1]+"-i"],v:[n[0]+"یی",n[1]+"yi"]})[n[2]];
+const nEz=n=>({c:[n[0],n[1]+"-e"],e:[n[0]+ZW+"ی",n[1]+"-ye"],i:[n[0],n[1]+"-ye"],v:[n[0]+"ی",n[1]+"-ye"]})[n[2]];
+const POS={c:[["م","ت","ش","مان","تان","شان"],["am","at","ash","emân","etân","eshân"]],e:[[ZW+"ام",ZW+"ات",ZW+"اش",ZW+"مان",ZW+"تان",ZW+"شان"],["-am","-at","-ash","-mân","-tân","-shân"]],v:[["یم","یت","یش","مان","تان","شان"],["yam","yat","yash","mân","tân","shân"]]};
+const nPos=(n,p)=>{const t=POS[n[2]==="i"?"e":n[2]];return[n[0]+t[0][p],n[1]+t[1][p]]};
+const NLPOS=(n,p)=>["mijn","jouw","zijn",n[4]==="het"?"ons":"onze","jullie","hun"][p];
+const j2=(...a)=>[a.map(x=>x[0]).join(" "),a.map(x=>x[1]).join(" ")];
+const aC=a=>a[6]||[a[0]+ZW+"تر",a[1]+"tar"],aS=a=>a[7]||[a[0]+ZW+"ترین",a[1]+"tarin"];
+const VB=f=>VERBS.find(v=>v.fa===f);
+const nlInf=v=>v.nl.split(" / ")[0].replace(/\s*\(.*\)/,"");
+const subj=(b,p)=>{const pre=IMP[b[0]][0],sf=b[5];return[(sf[0]==="آ"?"بیا"+sf.slice(1):"ب"+sf)+EF[p],pre+b[6]+EL[p]]};
+/* q builders */
+function gq(badge,prompt,good,bad,row,lat){const show=o=>lat||S.latin?o[1]:o[0],seen=new Set([show(good)]),ds=[];for(const b of sh(bad))if(b&&!seen.has(show(b))){seen.add(show(b));ds.push(b)}
+ const opts=sh([good,...ds.slice(0,3)]);return{kind:"gen",badge,prompt,opts:opts.map(o=>({h:esc(show(o)),c:lat||S.latin?"":"fa rtl"})),ci:opts.indexOf(good),rev:`<span class="fa">${esc(good[0])}</span> · ${esc(good[1])}`,row:row||[good[0],good[1],""]}}
+function gt(badge,prompt,goods,row){const g=goods[0];return{kind:"gtype",badge,prompt,ans:goods.flatMap(x=>[x[1],x[0]]),ph:"in gewone letters",hint:g[1].slice(0,3)+"…",rev:goods.map(x=>`<span class="fa">${esc(x[0])}</span> · ${esc(x[1])}`).join("<br>of: "),row:row||[g[0],g[1],""]}}
+const P_=t=>`<div class="word sm">${esc(t)}</div>`;
+const G=(typed,badge,prompt,good,bad,alts,row,lat)=>typed?gt(badge,prompt,[good,...(alts||[])],row):gq(badge,prompt,good,bad,row,lat);
+const GT=[
+ {id:"art",ic:"🅰️",n:"Lidwoorden & râ",d:"Een, het, dit/dat en het lijdend voorwerp.",
+  rules:`<div><b>Geen 'de' of 'het'</b>Perzisch heeft geen bepaald lidwoord. ketâb = het boek / boek.</div><div><b>'Een'</b>yek ketâb of ketâbi (met -i achter het woord). Beide betekenen 'een boek'.</div><div><b>râ = het bepaalde lijdend voorwerp</b>ketâb râ mibinam = ik zie <i>het</i> boek. yek ketâb mibinam = ik zie <i>een</i> boek.</div><div><b>Dit en dat</b>in ketâb = dit boek, ân ketâb = dat boek. In het meervoud: in ketâbhâ.</div>`,
+  gen:t=>{const n=rn(NN),k=Math.random()*5|0,yek=j2(["یک","yek"],n),pl=nPl(n),ind=nInd(n),row=x=>[x[0],x[1],""];
+   if(k===0){const g=Math.random()<.5?yek:ind,ph=`een ${n[3]}`;return G(t,"Hoe zeg je dit?",P_(ph),g,[n,pl,j2(n,["را","râ"]),j2(["این","in"],n)],[g===yek?ind:yek],[g[0],g[1],ph])}
+   if(k===1){const ph=`${n[4]} ${n[3]}`;return G(t,"Hoe zeg je dit?",P_(ph),n,[yek,ind,pl,j2(["آن","ân"],n)],null,[n[0],n[1],ph])}
+   if(k===2){const d=Math.random()<.5,ph=(d?(n[4]==="het"?"dit":"deze"):(n[4]==="het"?"dat":"die"))+" "+n[3],g=j2(d?["این","in"]:["آن","ân"],n);return G(t,"Aanwijzend",P_(ph),g,[j2(d?["آن","ân"]:["این","in"],n),j2(d?["این","in"]:["آن","ân"],pl),j2(["یک","yek"],n),n],null,[g[0],g[1],ph])}
+   if(k===3){const d=Math.random()<.5,ph=(d?"deze ":"die ")+n[5],g=j2(d?["این","in"]:["آن","ân"],pl);return G(t,"Aanwijzend meervoud",P_(ph),g,[j2(d?["این","in"]:["آن","ân"],n),j2(d?["آن","ân"]:["این","in"],pl),pl],null,[g[0],g[1],ph])}
+   const kv=n[7]&&Math.random()<.5,v=kv?VB("خریدن"):VB("دیدن"),nlv=kv?["koop","koopt","koopt","kopen","kopen","kopen"]:["zie","ziet","ziet","zien","zien","zien"],p=Math.random()*6|0,V=conj(v,0,p),m=Math.random()*3|0;
+   const ph=cap(`${NLP[p]} ${nlv[p]} ${[n[4]+" "+n[3],"een "+n[3],"de "+n[5]][m]}`),opts=[j2(n,["را","râ"],V),j2(["یک","yek"],n,V),j2(pl,["را","râ"],V),j2(n,V),j2(["یک","yek"],n,["را","râ"],V)],g=opts[m];
+   return G(t,"Met of zonder râ?",P_(ph),g,opts.filter(x=>x!==g),m===1?[j2(ind,V)]:null,[g[0],g[1],ph],1)}},
+ {id:"pl",ic:"👥",n:"Meervoud & getallen",d:"-hâ, -ân en getal + enkelvoud.",
+  rules:`<div><b>-hâ</b>Bijna alles kan met -hâ: ketâb → ketâbhâ (boeken), khâne → khânehâ.</div><div><b>-ân</b>Formeler, vooral bij mensen en levende dingen: dust → dustân, derakht → derakhtân. Na -e wordt het -gân: setâre → setâregân.</div><div><b>Getal + enkelvoud!</b>Na een getal blijft het woord enkelvoud: se ketâb = drie boeken. In spreektaal vaak met -tâ: se-tâ ketâb.</div>`,
+  gen:t=>{const n=rn(NN),k=Math.random()*3|0,pl=nPl(n);
+   if(k===0){const ph=n[5];return G(t,"Zet in het meervoud",P_(ph)+`<div class="tr">enkelvoud: ${esc(n[1])} (${esc(n[3])})</div>`,pl,[n,nInd(n),n[6]?null:[n[0]+"ان",n[1]+"ân"],nEz(n)],n[6]?[n[6]]:null,[pl[0],pl[1],ph])}
+   if(k===1&&n[6]){const ph=n[5]+" (formeel)";return G(t,"Meervoud met -ân",P_(ph),n[6],[pl,n,nInd(n),[n[0]+"ها",n[1]+"hâ-ân"]],null,[n[6][0],n[6][1],ph])}
+   const N=rn(NUMS),ph=`${N[2]} ${n[5]}`,g=j2(N,n);return G(t,"Getal + zelfstandig naamwoord",P_(ph),g,[j2(N,pl),j2(N,nInd(n)),j2(n,N)],[[N[0]+" تا "+n[0],N[1]+"-tâ "+n[1]]],[g[0],g[1],ph])}},
+ {id:"pos",ic:"🫴",n:"Bezit (mijn, jouw…)",d:"ketâbam = mijn boek.",
+  rules:`<div><b>Achtervoegsels</b>-am (mijn), -at (jouw), -ash (zijn/haar), -emân (ons), -etân (jullie), -eshân (hun). ketâbam = mijn boek.</div><div><b>Na een klinker</b>khâne-am, khâne-mân. Na -u/-â: pâyam (mijn voet).</div><div><b>Met ezafe kan ook</b>ketâb-e man = mijn boek, ketâb-e u = zijn boek. Iets nadrukkelijker.</div>`,
+  gen:t=>{const n=rn(NN),p=Math.random()*6|0,g=nPos(n,p),ez=j2(nEz(n),[PRON[p][0],PRON[p][1]]),ph=`${NLPOS(n,p)} ${n[3]}`,others=[0,1,2,3,4,5].filter(x=>x!==p).map(x=>nPos(n,x));
+   return G(t,"Hoe zeg je dit?",P_(ph),g,others,[ez],[g[0],g[1],ph])}},
+ {id:"ez",ic:"🔗",n:"Ezafe (bijvoeglijk)",d:"khâne-ye bozorg = het grote huis.",
+  rules:`<div><b>Bijvoeglijk na het woord</b>Het bijvoeglijk naamwoord komt achter het zelfstandig naamwoord, met -e ertussen: ketâb-e khub = goed boek.</div><div><b>Na een klinker: -ye</b>khâne-ye bozorg, dâneshju-ye jadid.</div><div><b>Ook voor bezit en 'van'</b>ketâb-e Sam = het boek van Sam, khiyâbân-e Tehrân = de straat van Teheran.</div><div><b>Meervoud</b>ketâbhâ-ye khub = goede boeken.</div>`,
+  gen:t=>{const n=rn(NN),a=rn(AJ),ez=nEz(n),k=Math.random()<.75,ph=k?`${n[4]} ${a[3]} ${n[3]}`:`(de) ${a[3]} ${n[5]}`,base=k?ez:[nPl(n)[0]+ZW+"ی",nPl(n)[1]+"-ye"],g=j2(base,a);
+   return G(t,"Ezafe",P_(ph),g,[j2(a,n),j2(n,a),j2(base,aC(a)),j2(ez,a)],null,[g[0],g[1],ph],1)}},
+ {id:"cmp",ic:"📈",n:"Vergelijken",d:"-tar (groter) en -tarin (grootst).",
+  rules:`<div><b>-tar = -er</b>bozorg → bozorgtar (groter). Uitzondering: khub → behtar (beter).</div><div><b>-tarin = -st</b>bozorgtarin (grootst), en het staat vóór het woord: bozorgtarin khâne = het grootste huis.</div><div><b>Dan = az</b>khâne az mâshin bozorgtar ast = het huis is groter dan de auto. Let op: az komt vóór het tweede woord en de vergelijking aan het eind.</div>`,
+  gen:t=>{const a=rn(AJ),k=Math.random()*4|0;
+   if(k===0)return G(t,"Vergrotende trap",P_(a[4])+`<div class="tr">${esc(a[1])} = ${esc(a[2])}</div>`,aC(a),[aS(a),a,aC(rn(AJ.filter(x=>x!==a)))],null,[aC(a)[0],aC(a)[1],a[4]]);
+   if(k===1)return G(t,"Overtreffende trap",P_("(het) "+a[5])+`<div class="tr">${esc(a[1])} = ${esc(a[2])}</div>`,aS(a),[aC(a),a,aS(rn(AJ.filter(x=>x!==a)))],null,[aS(a)[0],aS(a)[1],a[5]]);
+   if(k===2){const n=rn(NN),ph=`${n[4]} ${a[5]} ${n[3]}`,g=j2(aS(a),n);return G(t,"Overtreffend + woord",P_(ph),g,[j2(nEz(n),aS(a)),j2(nEz(n),aC(a)),j2(aC(a),n)],null,[g[0],g[1],ph],1)}
+   const n1=rn(NN),n2=rn(NN.filter(x=>x!==n1&&x[7]===n1[7])),ph=cap(`${n1[4]} ${n1[3]} is ${a[4]} dan ${n2[4]} ${n2[3]}.`),g=j2(n1,["از","az"],n2,aC(a),["است","ast"]);
+   return G(t,"Vergelijk",P_(ph),g,[j2(n2,["از","az"],n1,aC(a),["است","ast"]),j2(n1,n2,aC(a),["است","ast"]),j2(n1,["از","az"],n2,aS(a),["است","ast"]),j2(["از","az"],n1,n2,aC(a),["است","ast"])],null,[g[0],g[1],ph])}},
+ {id:"imp",ic:"📣",n:"Gebiedende wijs",d:"boro! (ga!), naro! (ga niet!).",
+  rules:`<div><b>be- + heden-stam</b>bekhar! (koop!), bebin! (kijk!). Soms bo- of bi-: bokhor!, biâ!</div><div><b>Onregelmatig klinkend</b>raftan → boro!, dâdan → bedeh!, shodan → besho!</div><div><b>Niet doen: na-</b>naro! (ga niet!), nakhor!, nayâ!</div><div><b>Meervoud/beleefd: + -id</b>beravid!, bokhorid!, biâyid!</div>`,
+  gen:t=>{const v=rn(VERBS.filter(v=>!v.pre&&IMP[v.fa])),I=IMP[v.fa],b=v.b,k=Math.random()*3|0,sg=[I[1],I[2]],neg=["ن"+I[1].slice(1),(I[2].startsWith("bi")?"nay":"na")+I[2].slice(2)],pl=subj(b,4),mi=conj(v,0,1);
+   const lab=["Bevel aan jij","Verbod aan jij","Bevel aan jullie / u"][k],ex=["zoals: Ga!","zoals: Ga niet!","zoals: Gaan jullie!"][k],g=[sg,neg,pl][k];
+   return G(t,"Gebiedende wijs",vInf(v)+`<p style="margin:12px 0 0;font-size:18px"><b>${lab}</b><br><span class="note">${ex}</span></p>`,g,[sg,neg,pl,mi,subj(b,0)].filter(x=>x!==g),null,[g[0],g[1],lab.toLowerCase()+" · "+v.nl])}},
+ {id:"mod",ic:"🎚️",n:"Willen, moeten, kunnen",d:"mikhâham beravam = ik wil gaan.",
+  rules:`<div><b>Aanvoegende wijs</b>Na willen/moeten/kunnen komt de aanvoegende wijs: be- + heden-stam + uitgang. beravam, bokhoram, biâyam.</div><div><b>Willen</b>mikhâham beravam = ik wil gaan. Beide werkwoorden krijgen de persoonsuitgang.</div><div><b>Kunnen</b>mitavânam beravam = ik kan gaan.</div><div><b>Moeten</b>bâyad beravam = ik moet gaan. bâyad verandert nooit.</div>`,
+  gen:t=>{const v=rn(VERBS.filter(v=>!v.pre&&IMP[v.fa])),b=v.b,p=Math.random()*6|0,k=Math.random()*3|0,M=[conj(VB("خواستن"),0,p),["باید","bâyad"],conj(VB("توانستن"),0,p)][k];
+   const nlm=[["wil","wilt","wil","willen","willen","willen"],["moet","moet","moet","moeten","moeten","moeten"],["kan","kunt","kan","kunnen","kunnen","kunnen"]][k][p],ph=cap(`${NLP[p]} ${nlm} ${nlInf(v)}`),S_=subj(b,p),g=j2(M,S_);
+   return G(t,"Vertaal",P_(ph),g,[j2(M,[v.fa,v.la]),j2(M,conj(v,0,p)),j2(M,subj(b,(p+1)%6)),j2(M,conj(v,1,p))],null,[g[0],g[1],ph])}},
+ {id:"ord",ic:"🥇",n:"Rangtelwoorden",d:"avval, dovvom, sevvom…",
+  rules:`<div><b>Getal + -om</b>panj → panjom (vijfde), haft → haftom. Let op: do → dovvom, se → sevvom, eerste = avval.</div><div><b>Na het woord met ezafe</b>ruz-e sevvom = de derde dag.</div><div><b>Of -omin ervoor</b>sevvomin ruz = de derde dag. Dat is iets formeler.</div>`,
+  gen:t=>{const i=Math.random()*10|0,o=ORD[i];if(Math.random()<.6)return G(t,"Rangtelwoord",P_(o[2]),[o[0],o[1]],ORD.filter(x=>x!==o).map(x=>[x[0],x[1]]),null,[o[0],o[1],o[2]]);
+   const n=rn(NN),ph=`${n[4]} ${o[2]} ${n[3]}`,g=j2(nEz(n),[o[0],o[1]]);return G(t,"Rangtelwoord + woord",P_(ph),g,[j2([o[0],o[1]],n),j2(nEz(n),rn(ORD.filter(x=>x!==o))),j2(n,[o[0],o[1]])],i>0?[j2([o[0]+"ین",o[1]+"in"],n)]:null,[g[0],g[1],ph],1)}}];
+function gRun(ids,typed){const T=ids.map(i=>GT.find(x=>x.id===i)),title=ids.length>1?"Grammatica-mix":T[0].n;
+ run({title,items:Array.from({length:S.n},(_,i)=>{const g=T[Math.random()*T.length|0];return g.gen(typed===2?Math.random()<.5:typed)}),requeue:1,mult:S.diff+1,back:gramArea,after:gramArea,again:()=>gRun(ids,typed),onDone:(ok,n,p)=>({gem:p===100?4:2})})}
+function gramTopic(id){const T=GT.find(x=>x.id===id);exitRun();document.body.classList.add("inq");scrollTo(0,0);const ex=Array.from({length:3},()=>T.gen(0));
+ scr.innerHTML=`<div class="qbar"><button class="btn x" id="back" aria-label="Terug">✕</button></div><h1>${T.ic} ${T.n}</h1><p class="sub">${T.d}</p>
+ <h2>De regels</h2><div class="why">${T.rules}</div>
+ <h2>Voorbeelden</h2><div class="list">${ex.map(q=>`<div class="ok"><span class="m">•</span><span class="fa">${esc(q.row[0])}</span><span>${esc(q.row[1])}</span><span>${esc(q.row[2])}</span></div>`).join("")}</div>
+ <div class="row"><button class="btn pri" data-m="0">Oefenen: kiezen</button><button class="btn pri" data-m="1">Oefenen: typen</button><button class="btn" data-m="2">Gemengd</button></div>`;
+ $("back").onclick=gramArea;scr.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>gRun([id],+b.dataset.m))}
+function gramArea(){exitRun();document.body.classList.add("inq");scrollTo(0,0);
+ scr.innerHTML=`<div class="qbar"><button class="btn x" id="back" aria-label="Terug">✕</button></div><h1>Grammatica</h1><p class="sub">Elk onderwerp heeft eerst de regels, daarna oefenen. De vragen worden met regels gemaakt, dus ze zijn steeds anders.</p>
+ <div class="grid" style="margin-top:16px"><button class="tile wide" id="mix"><span class="ic">🎲</span><span style="flex:1"><span class="n">Grammatica-mix</span><br><span class="c">Alle onderwerpen door elkaar, kiezen en typen gemengd.</span></span></button>
+ ${GT.map(g=>`<button class="tile" data-t="${g.id}"><span class="ic">${g.ic}</span><span><span class="n">${g.n}</span><br><span class="c">${g.d}</span></span></button>`).join("")}
+ <button class="tile" id="vb"><span class="ic">🔤</span><span><span class="n">Werkwoorden</span><br><span class="c">7 tijden vervoegen, stammen en tabellen.</span></span></button>
+ <button class="tile" id="sov" ${ZS.length?"":"disabled"}><span class="ic">🧩</span><span><span class="n">Zinsvolgorde</span><br><span class="c">Onderwerp, voorwerp, werkwoord: het werkwoord komt aan het eind.</span></span></button></div>
+ <h2>Instellingen</h2><div class="opts"><div><label>Vragen</label>${seg("gn",["10","20","30"],[10,20,30].indexOf(S.n))}</div></div>`;
+ $("back").onclick=()=>{exitRun();go("practice")};$("mix").onclick=()=>gRun(GT.map(g=>g.id),2);$("vb").onclick=verbArea;$("sov").onclick=()=>{build();R.after=gramArea};
+ scr.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>gramTopic(b.dataset.t));
+ $("gn").querySelectorAll("button").forEach(b=>b.onclick=()=>{S.n=[10,20,30][+b.dataset.v];save();gramArea()})}
+
+const GAMES=[["📐","Grammatica","Lidwoorden, meervoud, bezit, ezafe, vergelijken, gebiedende wijs en meer.",gramArea],["🔤","Werkwoorden","Vervoegen in 7 tijden, stammen en tabellen.",verbArea],["🧠","Woordquiz","Kies de juiste betekenis, met timer.",()=>catPick("Woordquiz",quiz)],
  ["⌨️","Typen","Zelf het antwoord typen. Zo onthoud je het het best.",()=>catPick("Typen",typing)],
  ["🧩","Zinnen bouwen","Woorden in de goede volgorde, beide kanten op.",build,"z"],
  ["✏️","Gatentekst","Kies het woord dat in de zin ontbreekt.",cloze,"z"],
