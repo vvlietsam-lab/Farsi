@@ -433,10 +433,11 @@ function practiceSession(){let due=dueList().slice(0,12);if(due.length<6)due=due
   onDone:()=>{S.hearts=Math.min(5,S.hearts+1);return{gem:3,xp:5}}})}
 function mistakes(){const cs=S.mist.map(id=>BYID[id]).filter(Boolean).slice(-15);if(!cs.length)return toast("Geen fouten om te oefenen","Netjes");
  run({title:"Je fouten",items:sh(cs).map(c=>Math.random()<.5?qType(c,1):qMC(c,0,4,CARDS)),requeue:1,back:()=>go("practice"),home:"practice",again:mistakes,onDone:()=>{S.hearts=Math.min(5,S.hearts+1);return{gem:3}}})}
+const dirP=()=>S.mode===2?(Math.random()<.5?0:1):S.mode;
 const arcade=(title,items,extra)=>Object.assign({title,items,back:()=>go("practice"),home:"practice",mult:S.diff+1},extra);
 function quiz(c){const d=DIFF[S.diff],all=wordsOf(c),pool=all.filter(x=>d.lv.includes(x.w[3]));
- run(arcade(c,pickN(pool,S.n).map(x=>qMC(x,S.mode,d.o,all)),{time:d.t,again:()=>quiz(c),onDone:(ok,n,p)=>{const k=c+S.diff;S.best[k]=Math.max(S.best[k]||0,p);return{gem:p===100?3:1}}}))}
-function typing(c){const d=DIFF[S.diff],pool=wordsOf(c).filter(x=>d.lv.includes(x.w[3]));run(arcade("Typen · "+c,pickN(pool,S.n).map(x=>qType(x,S.mode)),{again:()=>typing(c),onDone:()=>({gem:2})}))}
+ run(arcade(c,pickN(pool,S.n).map(x=>qMC(x,dirP(),d.o,all)),{time:d.t,again:()=>quiz(c),onDone:(ok,n,p)=>{const k=c+S.diff;S.best[k]=Math.max(S.best[k]||0,p);return{gem:p===100?3:1}}}))}
+function typing(c){const d=DIFF[S.diff],pool=wordsOf(c).filter(x=>d.lv.includes(x.w[3]));run(arcade("Typen · "+c,pickN(pool,S.n).map(x=>qType(x,dirP())),{again:()=>typing(c),onDone:()=>({gem:2})}))}
 function build(){const d=DIFF[S.diff],pool=ZS.filter(z=>d.lv.includes(z[3]));run(arcade("Zinnen bouwen",pickN(pool,S.n).map((z,i)=>i%2?qBank(z):qBuild(z)),{again:build,onDone:ok=>{S.built=(S.built||0)+ok;if(S.built>=10)trophy("build10");return{gem:2}}}))}
 function cloze(){const d=DIFF[S.diff],pool=ZS.filter(z=>d.lv.includes(z[3]));run(arcade("Gatentekst",pickN(pool,S.n*2).map(qCloze).filter(Boolean).slice(0,S.n),{again:cloze,onDone:()=>({gem:1})}))}
 function listening(){const pool=CARDS.filter(x=>DIFF[S.diff].lv.includes(x.w[3]));run(arcade("Luisteren",pickN(pool,S.n).map(c=>qListen(c,pool)),{again:listening,onDone:()=>({gem:2})}))}
@@ -490,7 +491,7 @@ function practiceTab(){const due=dueList().length;
   ${GAMES.map((m,j)=>{const off=(m[4]==="z"&&!ZS.length)||(m[4]==="tts"&&!canSpeak());return`<button class="tile" data-j="${j}" ${off?"disabled":""}><span class="ic ${m[0]==="ا"?"fa":""}">${m[0]}</span><span><span class="n">${m[1]}</span><br><span class="c">${off&&m[4]==="tts"?"Geen Perzische stem op dit apparaat.":m[2]}</span></span></button>`}).join("")}</div>
  <h2>Instellingen voor spellen</h2><div class="opts">
   <div><label>Niveau</label>${seg("sd",DIFF.map(d=>d.n),S.diff)}<div class="note">${DIFF[S.diff].d}</div></div>
-  <div><label>Richting</label>${seg("sm",["Perzisch → NL","NL → Perzisch"],S.mode)}</div>
+  <div><label>Richting</label>${seg("sm",["Perzisch → NL","NL → Perzisch","Beide"],S.mode)}</div>
   <div><label>Vragen</label>${seg("sn",["10","20","30"],[10,20,30].indexOf(S.n))}</div></div>`;
  $("pers").onclick=practiceSession;$("mist").onclick=mistakes;scr.querySelectorAll("[data-j]").forEach(t=>t.onclick=()=>GAMES[+t.dataset.j][3]());
  bindSeg("sd",v=>S.diff=v);bindSeg("sm",v=>S.mode=v);bindSeg("sn",v=>S.n=[10,20,30][v])}
